@@ -43,6 +43,13 @@ contract VERLEIH is ERC721 {
         return tokenId;
     }
 
+    function destoryDevice(uint256 tokenId) external onlyContractOwner {
+        address currentOwner = ownerOf(tokenId);
+        require(currentOwner != address(0), "ERC721: token doesn't exist or has been burned");
+        _burn(tokenId);
+        delete serialNumberOf[tokenId];
+    }
+
     function transferContractOwnership(address newOwner) external onlyContractOwner {
         require(newOwner != address(0), "Invalid address!");
         _contractOwner = newOwner;

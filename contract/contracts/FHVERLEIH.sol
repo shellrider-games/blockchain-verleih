@@ -74,6 +74,10 @@ contract VERLEIH is ERC721 {
         return timeShouldBackAtVerleih[_tokenId];
     }
 
+    function getTimeLastTakenFromVerleih(uint256 _tokenId) public view deviceExists(_tokenId) returns (uint) {
+        return lastTakenFromVerleih[_tokenId];
+    }
+
     function isApprovedRecipient(address recipient) public view returns (bool) {
         return _isApprovedRecipient[recipient];
     }

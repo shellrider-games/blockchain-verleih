@@ -7,6 +7,8 @@ contract VERLEIH is ERC721 {
     address private _contractOwner;
     uint256 private _nextTokenId;
     
+    mapping(uint256 => string) serialNumberOf;
+
     modifier onlyContractOwner() {
         require(msg.sender == _contractOwner, "Only the contract owner can call this function.");
         _;
@@ -17,9 +19,10 @@ contract VERLEIH is ERC721 {
         _nextTokenId = 1;
     }
 
-    function createNewDevice() public onlyContractOwner returns (uint256) {
+    function createNewDevice(string memory _serialNumber) external onlyContractOwner returns (uint256) {
         uint256 tokenId = _nextTokenId;
         _safeMint(_contractOwner, tokenId);
+        serialNumberOf[tokenId] = _serialNumber;
         _nextTokenId++;
         return tokenId;
     }
@@ -27,5 +30,9 @@ contract VERLEIH is ERC721 {
     function transferContractOwnership(address newOwner) external onlyContractOwner {
         require(newOwner != address(0), "Invalid address.");
         _contractOwner = newOwner;
+    }
+
+    function serialNumber(uint _id) external view returns (string memory){
+        return serialNumberOf[_id];
     }
 }

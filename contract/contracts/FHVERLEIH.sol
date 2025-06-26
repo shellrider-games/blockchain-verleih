@@ -8,10 +8,18 @@ contract VERLEIH is ERC721 {
     uint256 private _nextTokenId;
     
     mapping(uint256 => string) serialNumberOf;
+    mapping(uint256 => uint) lastTakenFromVerleih;
+    mapping(uint256 => uint) timeShouldBackAtVerleih;
     mapping(address => bool) _isApprovedRecipient;
 
     modifier onlyContractOwner() {
         require(msg.sender == _contractOwner, "Only the contract owner can call this function.");
+        _;
+    }
+
+    modifier deviceExists(uint tokenId) {
+        address currentOwner = ownerOf(tokenId);
+        require(currentOwner != address(0), "ERC721: token doesn't exist or has been burned");
         _;
     }
 
@@ -43,11 +51,9 @@ contract VERLEIH is ERC721 {
         return tokenId;
     }
 
-    function destoryDevice(uint256 tokenId) external onlyContractOwner {
-        address currentOwner = ownerOf(tokenId);
-        require(currentOwner != address(0), "ERC721: token doesn't exist or has been burned");
-        _burn(tokenId);
-        delete serialNumberOf[tokenId];
+    function destoryDevice(uint256 _tokenId) external onlyContractOwner deviceExists(_tokenId) {
+        _burn(_tokenId);
+        delete serialNumberOf[_tokenId];
     }
 
     function transferContractOwnership(address newOwner) external onlyContractOwner {
@@ -60,6 +66,14 @@ contract VERLEIH is ERC721 {
         return serialNumberOf[_id];
     }
 
+    function setTimeShouldBeBackAtVerleih(uint256 _tokenId, uint unixTime) external onlyContractOwner deviceExists(_tokenId) {
+        timeShouldBackAtVerleih[_tokenId] = unixTime;
+    }
+
+    function getTimeShouldBeBackAtVerleih(uint256 _tokenId) public view deviceExists(_tokenId) returns (uint) {
+        return timeShouldBackAtVerleih[_tokenId];
+    }
+
     function isApprovedRecipient(address recipient) public view returns (bool) {
         return _isApprovedRecipient[recipient];
     }
@@ -68,6 +82,9 @@ contract VERLEIH is ERC721 {
         address from = super._update(to, tokenId, auth);
         if(to != address(0)){
             require(_isApprovedRecipient[to], "Recipient is not on the approved list.");
+        }
+        if(from == _contractOwner) {
+            lastTakenFromVerleih[tokenId] = block.timestamp;
         }
         return from;
     }

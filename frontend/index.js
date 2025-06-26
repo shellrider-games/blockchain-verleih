@@ -1,8 +1,7 @@
-import { ethers } from 'ethers'
+import { ethers, Fragment, Interface } from 'ethers'
 
 let signer = null
-const contractAddress = '0x6Fd9cBC0442098AEdEaF1936992DE2222286562f'
-let abi = []
+const contractAddress = '0x7fA00FF2F8047c7bD079803d40157Fb04546Fdc5'
 
 // metamask integration
 async function integrateMetaMask() {
@@ -19,67 +18,60 @@ async function integrateMetaMask() {
 integrateMetaMask()
 
 async function readABIJson() {
-    const response = fetch('./abi.json').then((response) => {
-        return response.json()
-    })
+    try {
+        const response = await fetch('./contract.json')
+        const abi = await response.json()
 
-    console.log(response)
-
-    const iface = new ethers.utils.Interface(response)
-    console.log(iface.format(ethers.utils.FormatTypes.full))
+        const iface = new Interface(abi)
+        console.log(iface.format())
+        return iface
+    } catch (error) {
+        console.error(error)
+    }
 }
 
-readABIJson().catch((error) => {
-    console.error(error)
-    process.exitCode = 1
-})
-
-// smart contract interaction
-abi = [
-    // 'function name() public view returns (string)',
-    // 'function symbol() public view returns (string)',
-    // 'function decimals() public view returns (uint8)',
-    // 'function totalSupply() public view returns (uint256)',
-    // 'function approve(address _spender, uint256 _value) public returns (bool success)',
-
-    'function name() public view returns (string)',
-]
-
-// const res = require('./abi.json')
-
-const contract = new ethers.Contract(contractAddress, abi, signer)
+const contract = new ethers.Contract(
+    contractAddress,
+    await readABIJson(),
+    signer
+)
 
 async function callSmartContract() {
     const contractName = await contract.name()
     console.log(contractName)
 }
-callSmartContract()
+await callSmartContract()
 
-// const name = await USDTContract.name()
-// const symbol = await USDTContract.symbol()
-// const decimals = await USDTContract.decimals()
-// const totalSupply = await USDTContract.totalSupply()
+async function isAddressContractOwner() {
+    const contractOwner = await contract.amIContractOwner()
+    console.log(contractOwner)
+}
+await isAddressContractOwner()
 
-// console.log(
-//     `${symbol} (${name}) total supply is ${ethers.utils.formatUnits(totalSupply, decimals)}`
-// )
+async function transferContractOwnership(address) {
+    const contractOwner = await contract.transferContractOwnership(address)
+    console.log(contractOwner)
+}
 
-// const estimatedGasLimit = await USDTContract.estimateGas.approve(
-//     'SOME_ADDRESS',
-//     '1000000'
-// ) // approves 1 USDT
-// const approveTxUnsigned = await USDTContract.populateTransaction.approve(
-//     'SOME_ADDRESS',
-//     '1000000'
-// )
-// approveTxUnsigned.chainId = 1 // chainId 1 for Ethereum mainnet
-// approveTxUnsigned.gasLimit = estimatedGasLimit
-// approveTxUnsigned.gasPrice = await provider.getGasPrice()
-// approveTxUnsigned.nonce = await provider.getTransactionCount(walletAddress)
+async function createNewDevice(serialNumber) {
+    const contractOwner = await contract.createNewDevice(serialNumber)
+    console.log(contractOwner)
+}
 
-// const approveTxSigned = await signer.signTransaction(approveTxUnsigned)
-// const submittedTx = await provider.sendTransaction(approveTxSigned)
-// const approveReceipt = await submittedTx.wait()
-// if (approveReceipt.status === 0) throw new Error('Approve transaction failed')
+async function requestTransfer(tokenId, addressTo) {
+    await contract.requestTransfer(tokenId, addressTo)
+}
 
-// await USDTContract.approve('SOME_ADDRESS', '1000000')
+async function getPendingTransferDetails(tokenId) {
+    const pendingTransferDetails =
+        await contract.getPendingTransferDetails(tokenId)
+    console.log(pendingTransferDetails)
+}
+
+async function acceptTransferAsRecipient(tokenId) {
+    await contract.acceptTransferAsRecipient(tokenId)
+}
+
+async function acceptTransferAsOwner(tokenId) {
+    await contract.acceptTransferAsOwner(tokenId)
+}

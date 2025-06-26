@@ -12,6 +12,23 @@ contract VERLEIH is ERC721 {
     mapping(uint256 => uint) timeShouldBackAtVerleih;
     mapping(address => bool) _isApprovedRecipient;
 
+    struct PendingTransfer {
+        address from;
+        address to;
+        bool ownerAccepted;
+        bool recipientAccepted;
+        uint initiatedAt;
+    }
+
+    mapping(uint256 => PendingTransfer) public pendingTransfers;
+    mapping(uint256 => bool) public hasPendingTransfer;
+
+    event TransferRequested(uint256 indexed tokenId, address indexed from, address indexed to);
+    event RecipientAcceptedTransfer(uint256 indexed tokenId, address indexed recipient);
+    event OwnerAcceptedTransfer(uint256 indexed tokenId, address indexed owner);
+    event TransferCancelled(uint256 indexed tokenId, address indexed by);
+    event TransferConfirmed(uint256 indexed tokenId, address indexed from, address indexed to);
+
     modifier onlyContractOwner() {
         require(msg.sender == _contractOwner, "Only the contract owner can call this function.");
         _;
@@ -20,6 +37,16 @@ contract VERLEIH is ERC721 {
     modifier deviceExists(uint tokenId) {
         address currentOwner = ownerOf(tokenId);
         require(currentOwner != address(0), "ERC721: token doesn't exist or has been burned");
+        _;
+    }
+
+    modifier noPendingTransfer(uint256 tokenId) {
+        require(!hasPendingTransfer[tokenId], "A pending transfer already exists for this token.");
+        _;
+    }
+
+    modifier hasPendingTransfer_(uint256 tokenId) {
+        require(hasPendingTransfer[tokenId], "No pending transfer for this token.");
         _;
     }
 
@@ -54,6 +81,10 @@ contract VERLEIH is ERC721 {
     function destoryDevice(uint256 _tokenId) external onlyContractOwner deviceExists(_tokenId) {
         _burn(_tokenId);
         delete serialNumberOf[_tokenId];
+        if (hasPendingTransfer[_tokenId]) {
+            delete pendingTransfers[_tokenId];
+            hasPendingTransfer[_tokenId] = false;
+        }
     }
 
     function transferContractOwnership(address newOwner) external onlyContractOwner {
@@ -82,6 +113,82 @@ contract VERLEIH is ERC721 {
         return _isApprovedRecipient[recipient];
     }
 
+    function _finalizeTransfer(uint256 tokenId, address from, address to) internal {
+        _transfer(from, to, tokenId);
+
+        delete pendingTransfers[tokenId];
+        hasPendingTransfer[tokenId] = false;
+
+        emit TransferConfirmed(tokenId, from, to);
+    }
+
+    function requestTransfer(uint256 tokenId, address to)
+        external
+        deviceExists(tokenId)
+        noPendingTransfer(tokenId)
+    {
+        address currentOwner = ownerOf(tokenId);
+        require(msg.sender == currentOwner, "Only the current owner can request a transfer.");
+        require(to != address(0), "Invalid recipient address.");
+        require(_isApprovedRecipient[to], "Recipient is not on the approved list.");
+        require(currentOwner != to, "Cannot transfer to self.");
+
+        pendingTransfers[tokenId] = PendingTransfer({
+            from: currentOwner,
+            to: to,
+            ownerAccepted: false,
+            recipientAccepted: false,
+            initiatedAt: block.timestamp
+        });
+        hasPendingTransfer[tokenId] = true;
+        emit TransferRequested(tokenId, currentOwner, to);
+    }
+
+    function cancelTransfer(uint256 tokenId) external hasPendingTransfer_(tokenId)
+    {
+        PendingTransfer storage pTransfer = pendingTransfers[tokenId];
+        require(msg.sender == pTransfer.from || msg.sender == pTransfer.to, "Only the sender or recipient can cancel this transfer.");
+
+        delete pendingTransfers[tokenId];
+        hasPendingTransfer[tokenId] = false;
+        emit TransferCancelled(tokenId, msg.sender);
+    }
+
+    function acceptTransferAsRecipient(uint256 tokenId) external hasPendingTransfer_(tokenId)
+    {
+        PendingTransfer storage pTransfer = pendingTransfers[tokenId];
+        require(msg.sender == pTransfer.to, "Only the intended recipient can accept this transfer.");
+        require(!pTransfer.recipientAccepted, "Recipient has already accepted.");
+
+        pTransfer.recipientAccepted = true;
+        emit RecipientAcceptedTransfer(tokenId, msg.sender);
+
+        if (pTransfer.ownerAccepted) {
+            _finalizeTransfer(tokenId, pTransfer.from, pTransfer.to);
+        }
+    }
+
+    function acceptTransferAsOwner(uint256 tokenId) external hasPendingTransfer_(tokenId)
+    {
+        PendingTransfer storage pTransfer = pendingTransfers[tokenId];
+        require(msg.sender == pTransfer.from, "Only the current owner can accept this transfer.");
+        require(!pTransfer.ownerAccepted, "Owner has already accepted.");
+
+        pTransfer.ownerAccepted = true;
+        emit OwnerAcceptedTransfer(tokenId, msg.sender);
+
+        if (pTransfer.recipientAccepted) {
+            _finalizeTransfer(tokenId, pTransfer.from, pTransfer.to);
+        }
+    }
+
+    function getPendingTransferDetails(uint256 tokenId) external view returns (address from, address to, bool ownerAccepted, bool recipientAccepted, uint256 initiatedAt)
+    {
+        require(hasPendingTransfer[tokenId], "No pending transfer for this token.");
+        PendingTransfer storage pTransfer = pendingTransfers[tokenId];
+        return (pTransfer.from, pTransfer.to, pTransfer.ownerAccepted, pTransfer.recipientAccepted, pTransfer.initiatedAt);
+    }
+
     function approve(address to, uint256 tokenId) public virtual override {
         revert("ERC721: Approval function is disabled for this token.");
     }
@@ -103,6 +210,8 @@ contract VERLEIH is ERC721 {
         if(to != address(0)){
             require(_isApprovedRecipient[to], "Recipient is not on the approved list.");
         }
+        require(!hasPendingTransfer[tokenId] || pendingTransfers[tokenId].ownerAccepted && pendingTransfers[tokenId].recipientAccepted, "Transfer must go through the request and acceptance process.");
+        
         if(from == _contractOwner) {
             lastTakenFromVerleih[tokenId] = block.timestamp;
         }

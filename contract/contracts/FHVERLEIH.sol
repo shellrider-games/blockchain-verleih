@@ -210,7 +210,7 @@ contract VERLEIH is ERC721 {
         if(to != address(0)){
             require(_isApprovedRecipient[to], "Recipient is not on the approved list.");
         }
-        require(!hasPendingTransfer[tokenId] || pendingTransfers[tokenId].ownerAccepted && pendingTransfers[tokenId].recipientAccepted, "Transfer must go through the request and acceptance process.");
+        require(hasPendingTransfer[tokenId] && pendingTransfers[tokenId].ownerAccepted && pendingTransfers[tokenId].recipientAccepted, "Transfer must go through the request and acceptance process.");
         
         if(from == _contractOwner) {
             lastTakenFromVerleih[tokenId] = block.timestamp;

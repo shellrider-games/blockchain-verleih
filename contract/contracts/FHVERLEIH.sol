@@ -82,6 +82,22 @@ contract VERLEIH is ERC721 {
         return _isApprovedRecipient[recipient];
     }
 
+    function approve(address to, uint256 tokenId) public virtual override {
+        revert("ERC721: Approval function is disabled for this token.");
+    }
+
+    function setApprovalForAll(address operator, bool approved) public virtual override {
+        revert("ERC721: SetApprovalForAll function is disabled for this token.");
+    }
+
+    function getApproved(uint256 tokenId) public view virtual override returns (address) {
+        return address(0); // No approvals are possible
+    }
+
+    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
+        return false; // No operators can be approved
+    }
+
     function _update(address to, uint256 tokenId, address auth) internal virtual override returns (address) {
         address from = super._update(to, tokenId, auth);
         if(to != address(0)){

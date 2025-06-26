@@ -8,8 +8,8 @@ contract VERLEIH is ERC721 {
     uint256 private _nextTokenId;
     
     mapping(uint256 => string) serialNumberOf;
-    mapping(uint256 => uint) lastTakenFromVerleih;
-    mapping(uint256 => uint) timeShouldBackAtVerleih;
+    mapping(uint256 => uint) rentalStart;
+    mapping(uint256 => uint) rentalEnd;
     mapping(address => bool) _isApprovedRecipient;
 
     struct PendingTransfer {
@@ -20,8 +20,8 @@ contract VERLEIH is ERC721 {
         uint initiatedAt;
     }
 
-    mapping(uint256 => PendingTransfer) public pendingTransfers;
-    mapping(uint256 => bool) public hasPendingTransfer;
+    mapping(uint256 => PendingTransfer) pendingTransfers;
+    mapping(uint256 => bool) hasPendingTransfer;
 
     event TransferRequested(uint256 indexed tokenId, address indexed from, address indexed to);
     event RecipientAcceptedTransfer(uint256 indexed tokenId, address indexed recipient);
@@ -78,7 +78,7 @@ contract VERLEIH is ERC721 {
         return tokenId;
     }
 
-    function destoryDevice(uint256 _tokenId) external onlyContractOwner deviceExists(_tokenId) {
+    function destroyDevice(uint256 _tokenId) external onlyContractOwner deviceExists(_tokenId) {
         _burn(_tokenId);
         delete serialNumberOf[_tokenId];
         if (hasPendingTransfer[_tokenId]) {
@@ -97,16 +97,16 @@ contract VERLEIH is ERC721 {
         return serialNumberOf[_id];
     }
 
-    function setTimeShouldBeBackAtVerleih(uint256 _tokenId, uint unixTime) external onlyContractOwner deviceExists(_tokenId) {
-        timeShouldBackAtVerleih[_tokenId] = unixTime;
+    function setRentalEnd(uint256 _tokenId, uint unixTime) external onlyContractOwner deviceExists(_tokenId) {
+        rentalEnd[_tokenId] = unixTime;
     }
 
-    function getTimeShouldBeBackAtVerleih(uint256 _tokenId) public view deviceExists(_tokenId) returns (uint) {
-        return timeShouldBackAtVerleih[_tokenId];
+    function getRentalEnd(uint256 _tokenId) public view deviceExists(_tokenId) returns (uint) {
+        return rentalEnd[_tokenId];
     }
 
-    function getTimeLastTakenFromVerleih(uint256 _tokenId) public view deviceExists(_tokenId) returns (uint) {
-        return lastTakenFromVerleih[_tokenId];
+    function getRentalStart(uint256 _tokenId) public view deviceExists(_tokenId) returns (uint) {
+        return rentalStart[_tokenId];
     }
 
     function isApprovedRecipient(address recipient) public view returns (bool) {
@@ -210,10 +210,11 @@ contract VERLEIH is ERC721 {
         if(to != address(0)){
             require(_isApprovedRecipient[to], "Recipient is not on the approved list.");
         }
-        require(hasPendingTransfer[tokenId] && pendingTransfers[tokenId].ownerAccepted && pendingTransfers[tokenId].recipientAccepted, "Transfer must go through the request and acceptance process.");
-        
+        if(from != address(0) && to != address(0)){
+            require(hasPendingTransfer[tokenId] && pendingTransfers[tokenId].ownerAccepted && pendingTransfers[tokenId].recipientAccepted, "Transfer must go through the request and acceptance process.");
+        }
         if(from == _contractOwner) {
-            lastTakenFromVerleih[tokenId] = block.timestamp;
+            rentalStart[tokenId] = block.timestamp;
         }
         return from;
     }

@@ -8,6 +8,7 @@ import {
 import { ethers, Interface } from 'ethers';
 
 let isOwner = false;
+let liCache = {};
 
 function setStatusBarText(value){
     const statusBar = document.getElementById('status-bar');
@@ -42,7 +43,8 @@ async function allExistingDeviceIds() {
 }
 
 async function decommsionDevice(id) {
-    await getContract().destroyDevice(id);
+    const call = await getContract().destroyDevice(id);
+    liCache[id].remove();
 }
 
 async function addDevicesToList(devices) {
@@ -61,6 +63,7 @@ async function addDevicesToList(devices) {
             });
             li.appendChild(button);
         }
+        liCache[device] = li;
         deviceList.appendChild(li);
     }
 }

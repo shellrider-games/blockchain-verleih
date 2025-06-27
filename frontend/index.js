@@ -14,7 +14,7 @@ let requestTransferTokenInput = document.getElementById('requestTransferToken')
 let requestTransferAddressInput = document.getElementById(
     'requestTransferAddress'
 )
-let newWalletAddressInput = document.getElementById('newWalletAddress')
+let walletAddressInput = document.getElementById('walletAddress')
 let decommsionDeviceInput = document.getElementById('decommsionDevice')
 
 let createNewDeviceButton = document.getElementById('createNewDeviceButton')
@@ -66,11 +66,11 @@ async function runApp() {
         }
 
         addWalletButton.onclick = async () => {
-            await myContract.requestTransfer()
+            await myContract.addApprovedRecipient(walletAddressInput.value)
         }
 
         removeWalletButton.onclick = async () => {
-            await myContract.requestTransfer()
+            await myContract.removeApprovedRecipient(walletAddressInput.value)
         }
     } catch (error) {
         console.error('Error interacting with contract:', error)

@@ -5,37 +5,38 @@
         <title>blockchain-verleih</title>
         <link rel="stylesheet" href="styles.css" />
     </head>
-    <body>
-        <h1>Verleih</h1>
-        <script type="module" src="index.js"></script>
+    <body class="">
+        <h1>UAS Rental Service</h1>
 
-        <a href="./device-list.html">Device List</a>
+        <a href="./device-list.html">Go to Device List</a>
 
         <p>Request Transfer</p>
-        <input placeholder="tokenId" type="number" name="requestTransferToken" id="requestTransferToken" />
-        <input placeholder="address to" type="text" name="requestTransferAddress" id="requestTransferAddress" />
-        <button id="requestTransferButton">transfer</button>
+        <input placeholder="TokenId" type="number" name="requestTransferToken" id="requestTransferToken" />
+        <input placeholder="Address To" type="text" name="requestTransferAddress" id="requestTransferAddress" />
+        <button id="requestTransferButton">Transfer</button>
 
         <br />
         <div style="visibility: hidden;" id="ownerOnly">
             <h2>Contract Owner</h2>
 
             <p>Create new Device</p>
-            <input placeholder="serial number" type="text" name="createNewDevice" id="createNewDevice" />
-            <button id="createNewDeviceButton">register</button>
+            <input placeholder="Serial Number" type="text" name="createNewDevice" id="createNewDevice" />
+            <button id="createNewDeviceButton">Register</button>
             <br />
 
             <p>Transfer Ownership</p>
-            <input placeholder="address" type="text" name="transferOwnership" id="transferOwnership" />
-            <button id="transferOwnershipButton">change</button>
+            <input placeholder="Address" type="text" name="transferOwnership" id="transferOwnership" />
+            <button id="transferOwnershipButton">Change</button>
             <br />
 
 
             <p>Approved Wallets</p>
-            <input placeholder="address" type="text" name="walletAddress" id="walletAddress" />
-            <button id="addWalletButton">add</button>
-            <button id="removeWalletButton">remove</button>
+            <input placeholder="Address" type="text" name="walletAddress" id="walletAddress" />
+            <button id="addWalletButton">Add</button>
+            <button id="removeWalletButton">Remove</button>
             <br />
         </div>
+
+        <script type="module" src="index.js"></script>
     </body>
 </html>

@@ -1,39 +1,24 @@
-import { ethers, Interface } from 'ethers'
+import {
+    initializeWeb3,
+    getContract,
+    getSigner,
+    getProvider,
+} from './services/web3';
 
-let signer = null;
-const contractAddress = '0x7fA00FF2F8047c7bD079803d40157Fb04546Fdc5';
-let contract = null;
+import { ethers, Interface } from 'ethers';
 
-async function integrateMetaMask() {
-    let provider;
-    if (window.ethereum == null) {
-        console.log('MetaMask not installed; using read-only defaults');
-        provider = ethers.getDefaultProvider();
-    } else {
-        provider = new ethers.BrowserProvider(window.ethereum);
-
-        signer = await provider.getSigner();
-    }
-}
-
-async function readABIJson() {
-    try {
-        const response = await fetch('./contract.json')
-        const abi = await response.json()
-        const iface = new Interface(abi)
-        return iface
-    } catch (error) {
-        console.error(error)
-    }
+function setStatusBarText(value){
+    const statusBar = document.getElementById('status-bar');
+    statusBar.innerHTML = `<p> ${value} </p>`;
 }
 
 async function loaadAllTransferEvents() {
-    const eventFilter = contract.filters.Transfer();
+    const eventFilter = getContract().filters.Transfer();
     const from = 0;
     const to = 'latest';
 
     console.log("load all past transfer events");
-    const events = await contract.queryFilter(eventFilter, from, to);
+    const events = await getContract().queryFilter(eventFilter, from, to);
     return events;
 }
 
@@ -57,21 +42,42 @@ async function allExistingDeviceIds() {
 async function addDevicesToList(devices) {
     const deviceList = document.getElementById('device-list');
     for(let device of devices){
+        const sn = await getContract().serialNumber(device);
         let li = document.createElement("li");
-        li.innerText = `ID: ${device}`;
+        li.innerText = `ID: ${device} Serial: ${sn}`;
         deviceList.appendChild(li);
     }
 }
 
+async function runApp() {
+    await initializeWeb3()
+
+    try {
+        const myContract = getContract()
+        const currentSigner = getSigner()
+
+        const contractName = await myContract.name()
+        console.log('Contract Name:', contractName)
+
+        const isOwner = await myContract.amIContractOwner()
+        console.log('Am I Contract Owner:', isOwner)
+    } catch (error) {
+        console.error('Error interacting with contract:', error)
+        if (error.code === 'ACTION_REJECTED') {
+            console.error('Transaction was rejected by the user.')
+        } else if (error.code === 'CALL_EXCEPTION' || error.data) {
+            console.error(
+                'Contract call failed:',
+                error.reason || error.data.message || error.message
+            )
+        }
+    }
+}
+
 window.addEventListener("load", async () => {
-    console.log("Loaded");
-    await integrateMetaMask();
-    contract = new ethers.Contract(
-        contractAddress,
-        await readABIJson(),
-        signer
-    );
+    await runApp()
+    setStatusBarText("Load all devices");
     const devices = Array.from(await allExistingDeviceIds());
-    console.log(devices);
-    addDevicesToList(devices);
+    await addDevicesToList(devices);
+    setStatusBarText("Finished loading");
 });

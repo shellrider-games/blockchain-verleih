@@ -11,18 +11,14 @@ let ownerOnly = document.getElementById('ownerOnly')
 let createNewDeviceInput = document.getElementById('createNewDevice')
 let transferOwnershipInput = document.getElementById('transferOwnership')
 let requestTransferTokenInput = document.getElementById('requestTransferToken')
-let requestTransferAddressInput = document.getElementById(
-    'requestTransferAddress'
-)
+let requestTransferAddressInput = document.getElementById('requestTransferAddress')
 let walletAddressInput = document.getElementById('walletAddress')
-let decommsionDeviceInput = document.getElementById('decommsionDevice')
 
 let createNewDeviceButton = document.getElementById('createNewDeviceButton')
 let transferOwnershipButton = document.getElementById('transferOwnershipButton')
 let requestTransferButton = document.getElementById('requestTransferButton')
 let addWalletButton = document.getElementById('addWalletButton')
 let removeWalletButton = document.getElementById('removeWalletButton')
-let decommsionDeviceButton = document.getElementById('decommsionDeviceButton')
 
 async function runApp() {
     await initializeWeb3()

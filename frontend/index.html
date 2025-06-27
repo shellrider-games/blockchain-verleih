@@ -8,6 +8,46 @@
     <body>
         <h1>Verleih</h1>
         <script type="module" src="index.js"></script>
-        <div id=""></div>
+        <div id="ownerOnly">
+            <h2>Contract Owner</h2>
+            <p>Create new Device</p>
+            <input type="text" name="createNewDevice" id="createNewDevice" />
+            <button id="createNewDeviceButton">register</button>
+            <br />
+
+            <p>Transfer Ownership</p>
+            <input
+                type="text"
+                name="transferOwnership"
+                id="transferOwnership"
+            />
+            <button id="transferOwnershipButton">change</button>
+            <br />
+
+            <p>Request Transfer</p>
+            <input
+                type="number"
+                name="requestTransferToken"
+                id="requestTransferToken"
+            />
+            <input
+                type="text"
+                name="requestTransferAddress"
+                id="requestTransferAddress"
+            />
+            <button id="requestTransferButton">register</button>
+            <br />
+
+            <p>Approved Wallets</p>
+            <input type="text" name="walletAddress" id="newWalletAddress" />
+            <button id="addWalletButton">add</button>
+            <button id="removeWalletButton">remove</button>
+            <br />
+
+            <p>Decommision Device</p>
+            <input type="text" name="decommisionDevice" id="decommsionDevice" />
+            <button id="decommisionDeviceButton">decommision</button>
+            <br />
+        </div>
     </body>
 </html>

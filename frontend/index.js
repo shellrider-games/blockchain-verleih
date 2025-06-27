@@ -6,6 +6,24 @@ import {
     getProvider,
 } from './services/web3'
 
+let ownerOnly = document.getElementById('ownerOnly')
+
+let createNewDeviceInput = document.getElementById('createNewDevice')
+let transferOwnershipInput = document.getElementById('transferOwnership')
+let requestTransferTokenInput = document.getElementById('requestTransferToken')
+let requestTransferAddressInput = document.getElementById(
+    'requestTransferAddress'
+)
+let newWalletAddressInput = document.getElementById('newWalletAddress')
+let decommsionDeviceInput = document.getElementById('decommsionDevice')
+
+let createNewDeviceButton = document.getElementById('createNewDeviceButton')
+let transferOwnershipButton = document.getElementById('transferOwnershipButton')
+let requestTransferButton = document.getElementById('requestTransferButton')
+let addWalletButton = document.getElementById('addWalletButton')
+let removeWalletButton = document.getElementById('removeWalletButton')
+let decommsionDeviceButton = document.getElementById('decommsionDeviceButton')
+
 async function runApp() {
     await initializeWeb3()
 
@@ -20,6 +38,40 @@ async function runApp() {
         // Read isOwner
         const isOwner = await myContract.amIContractOwner()
         console.log('Am I Contract Owner:', isOwner)
+
+        // hide/show owner ui
+        // if (isOwner) {
+        //     ownerOnly.style.visibility = 'visible'
+        // } else {
+        //     ownerOnly.style.visibility = 'hidden'
+        // }
+
+        createNewDeviceButton.onclick = async () => {
+            const contractOwner = await myContract.createNewDevice(
+                createNewDeviceInput.value
+            )
+        }
+
+        transferOwnershipButton.onclick = async () => {
+            const contractOwner = await myContract.transferContractOwnership(
+                transferOwnershipInput.value
+            )
+        }
+
+        requestTransferButton.onclick = async () => {
+            await myContract.requestTransfer(
+                requestTransferTokenInput.value,
+                requestTransferAddressInput.value
+            )
+        }
+
+        addWalletButton.onclick = async () => {
+            await myContract.requestTransfer()
+        }
+
+        removeWalletButton.onclick = async () => {
+            await myContract.requestTransfer()
+        }
     } catch (error) {
         console.error('Error interacting with contract:', error)
         if (error.code === 'ACTION_REJECTED') {

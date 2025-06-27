@@ -81,4 +81,6 @@ async function runApp() {
     }
 }
 
-await runApp()
+window.addEventListener('load', async () => {
+    await runApp()
+})

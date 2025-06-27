@@ -30,10 +30,10 @@ async function getTransfersInvolvingAddress(address) {
         const from = transfer.args[1]
         const to = transfer.args[2]
 
-        if (from === address) {
+        if (from === address || to === address) {
             relevantTokens.add(tokenId)
             isReceiver = false
-        } else if (to === address) {
+        } else {
             relevantTokens.delete(tokenId)
             isReceiver = true
         }

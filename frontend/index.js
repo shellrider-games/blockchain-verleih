@@ -1,77 +1,36 @@
-import { ethers, Fragment, Interface } from 'ethers'
+// src/app.js (or main application file)
+import {
+    initializeWeb3,
+    getContract,
+    getSigner,
+    getProvider,
+} from './services/web3'
 
-let signer = null
-const contractAddress = '0x7fA00FF2F8047c7bD079803d40157Fb04546Fdc5'
+async function runApp() {
+    await initializeWeb3()
 
-// metamask integration
-async function integrateMetaMask() {
-    let provider
-    if (window.ethereum == null) {
-        console.log('MetaMask not installed; using read-only defaults')
-        provider = ethers.getDefaultProvider()
-    } else {
-        provider = new ethers.BrowserProvider(window.ethereum)
-
-        signer = await provider.getSigner()
-    }
-}
-integrateMetaMask()
-
-async function readABIJson() {
     try {
-        const response = await fetch('./contract.json')
-        const abi = await response.json()
+        const myContract = getContract()
+        const currentSigner = getSigner()
 
-        const iface = new Interface(abi)
-        console.log(iface.format())
-        return iface
+        // Read contract name
+        const contractName = await myContract.name()
+        console.log('Contract Name:', contractName)
+
+        // Read isOwner
+        const isOwner = await myContract.amIContractOwner()
+        console.log('Am I Contract Owner:', isOwner)
     } catch (error) {
-        console.error(error)
+        console.error('Error interacting with contract:', error)
+        if (error.code === 'ACTION_REJECTED') {
+            console.error('Transaction was rejected by the user.')
+        } else if (error.code === 'CALL_EXCEPTION' || error.data) {
+            console.error(
+                'Contract call failed:',
+                error.reason || error.data.message || error.message
+            )
+        }
     }
 }
 
-const contract = new ethers.Contract(
-    contractAddress,
-    await readABIJson(),
-    signer
-)
-
-async function callSmartContract() {
-    const contractName = await contract.name()
-    console.log(contractName)
-}
-await callSmartContract()
-
-async function isAddressContractOwner() {
-    const contractOwner = await contract.amIContractOwner()
-    console.log(contractOwner)
-}
-await isAddressContractOwner()
-
-async function transferContractOwnership(address) {
-    const contractOwner = await contract.transferContractOwnership(address)
-    console.log(contractOwner)
-}
-
-async function createNewDevice(serialNumber) {
-    const contractOwner = await contract.createNewDevice(serialNumber)
-    console.log(contractOwner)
-}
-
-async function requestTransfer(tokenId, addressTo) {
-    await contract.requestTransfer(tokenId, addressTo)
-}
-
-async function getPendingTransferDetails(tokenId) {
-    const pendingTransferDetails =
-        await contract.getPendingTransferDetails(tokenId)
-    console.log(pendingTransferDetails)
-}
-
-async function acceptTransferAsRecipient(tokenId) {
-    await contract.acceptTransferAsRecipient(tokenId)
-}
-
-async function acceptTransferAsOwner(tokenId) {
-    await contract.acceptTransferAsOwner(tokenId)
-}
+await runApp()

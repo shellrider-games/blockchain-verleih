@@ -8,10 +8,17 @@
     <body>
         <h1>Verleih</h1>
         <script type="module" src="index.js"></script>
+
+        <a href="./device-list.html">Device List</a>
+
+        <p>Request Transfer</p>
+        <input placeholder="tokenId" type="number" name="requestTransferToken" id="requestTransferToken" />
+        <input placeholder="address to" type="text" name="requestTransferAddress" id="requestTransferAddress" />
+        <button id="requestTransferButton">transfer</button>
+
+        <br />
         <div id="ownerOnly">
             <h2>Contract Owner</h2>
-
-            <a href="./device-list.html">Device List</a>
 
             <p>Create new Device</p>
             <input placeholder="serial number" type="text" name="createNewDevice" id="createNewDevice" />
@@ -23,11 +30,6 @@
             <button id="transferOwnershipButton">change</button>
             <br />
 
-            <p>Request Transfer</p>
-            <input placeholder="tokenId" type="number" name="requestTransferToken" id="requestTransferToken" />
-            <input placeholder="address" type="text" name="requestTransferAddress" id="requestTransferAddress" />
-            <button id="requestTransferButton">register</button>
-            <br />
 
             <p>Approved Wallets</p>
             <input placeholder="address" type="text" name="walletAddress" id="walletAddress" />

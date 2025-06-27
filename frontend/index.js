@@ -11,7 +11,9 @@ let ownerOnly = document.getElementById('ownerOnly')
 let createNewDeviceInput = document.getElementById('createNewDevice')
 let transferOwnershipInput = document.getElementById('transferOwnership')
 let requestTransferTokenInput = document.getElementById('requestTransferToken')
-let requestTransferAddressInput = document.getElementById('requestTransferAddress')
+let requestTransferAddressInput = document.getElementById(
+    'requestTransferAddress'
+)
 let walletAddressInput = document.getElementById('walletAddress')
 
 let createNewDeviceButton = document.getElementById('createNewDeviceButton')
@@ -36,20 +38,18 @@ async function runApp() {
         console.log('Am I Contract Owner:', isOwner)
 
         // hide/show owner ui
-        // if (isOwner) {
-        //     ownerOnly.style.visibility = 'visible'
-        // } else {
-        //     ownerOnly.style.visibility = 'hidden'
-        // }
+        if (isOwner) {
+            ownerOnly.style.visibility = 'visible'
+        } else {
+            ownerOnly.style.visibility = 'hidden'
+        }
 
         createNewDeviceButton.onclick = async () => {
-            const contractOwner = await myContract.createNewDevice(
-                createNewDeviceInput.value
-            )
+            await myContract.createNewDevice(createNewDeviceInput.value)
         }
 
         transferOwnershipButton.onclick = async () => {
-            const contractOwner = await myContract.transferContractOwnership(
+            await myContract.transferContractOwnership(
                 transferOwnershipInput.value
             )
         }

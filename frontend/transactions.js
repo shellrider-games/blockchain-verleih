@@ -21,24 +21,66 @@ async function loadAllTransferRequestedEvents() {
     return events
 }
 
+async function loadAllTransferCancelledTokenIds() {
+    try {
+        console.log('Loading all past TransferCanceled events...')
+        const eventFilter = getContract().filters.TransferCancelled()
+        const events = await getContract().queryFilter(eventFilter, 0, 'latest')
+        const canceledTokenIds = new Set()
+        events.forEach((event) => {
+            // Assuming tokenId is the first argument (index 0)
+            canceledTokenIds.add(event.args[0].toString())
+        })
+        console.log(`Found ${canceledTokenIds.size} canceled tokens.`)
+        return canceledTokenIds
+    } catch (error) {
+        console.error('Error loading TransferCanceled events:', error)
+        throw error
+    }
+}
+
+async function loadAllTransferConfirmedTokenIds() {
+    try {
+        console.log('Loading all past TransferConfirmed events...')
+        const eventFilter = getContract().filters.TransferConfirmed()
+        const events = await getContract().queryFilter(eventFilter, 0, 'latest')
+        const confirmedTokenIds = new Set()
+        events.forEach((event) => {
+            // Assuming tokenId is the first argument (index 0)
+            confirmedTokenIds.add(event.args[0].toString())
+        })
+        console.log(`Found ${confirmedTokenIds.size} confirmed tokens.`)
+        return confirmedTokenIds
+    } catch (error) {
+        console.error('Error loading TransferConfirmed events:', error)
+        throw error
+    }
+}
+
 async function getTransfersInvolvingAddress(address) {
-    let isReceiver = true
-    const transfers = await loadAllTransferRequestedEvents()
-    const relevantTokens = new Set()
-    transfers.forEach((transfer) => {
+    const [requestedTransfers, canceledTokenIds, confirmedTokenIds] =
+        await Promise.all([
+            loadAllTransferRequestedEvents(),
+            loadAllTransferCancelledTokenIds(),
+            loadAllTransferConfirmedTokenIds(),
+        ])
+    const pendingTransferTokenIds = new Set()
+    requestedTransfers.forEach((transfer) => {
         const tokenId = transfer.args[0].toString()
         const from = transfer.args[1]
         const to = transfer.args[2]
 
-        if (from === address || to === address) {
-            relevantTokens.add(tokenId)
-            isReceiver = false
-        } else {
-            relevantTokens.delete(tokenId)
-            isReceiver = true
+        const isCanceled = canceledTokenIds.has(tokenId)
+        const isConfirmed = confirmedTokenIds.has(tokenId)
+        if (!isCanceled && !isConfirmed) {
+            if (from === address || to === address) {
+                pendingTransferTokenIds.add(tokenId)
+            } else {
+                pendingTransferTokenIds.delete(tokenId)
+            }
         }
     })
-    return relevantTokens
+    return pendingTransferTokenIds
 }
 
 async function runApp() {

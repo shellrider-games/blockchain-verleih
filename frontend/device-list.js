@@ -73,8 +73,6 @@ async function runApp() {
 
     try {
         const myContract = getContract()
-        const currentSigner = getSigner()
-
         const contractName = await myContract.name()
         console.log('Contract Name:', contractName)
 

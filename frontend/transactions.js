@@ -6,7 +6,10 @@ import {
     getProvider,
 } from './services/web3'
 
-let transactionList = document.getElementById('transactionList')
+function setStatusBarText(value) {
+    const statusBar = document.getElementById('status-bar')
+    statusBar.innerHTML = `<p> ${value} </p>`
+}
 
 async function loadAllTransferRequestedEvents() {
     const eventFilter = getContract().filters.TransferRequested()
@@ -21,21 +24,21 @@ async function loadAllTransferRequestedEvents() {
 async function getTransfersInvolvingAddress(address) {
     let isReceiver = true
     const transfers = await loadAllTransferRequestedEvents()
-    const mintedTokens = new Set()
+    const relevantTokens = new Set()
     transfers.forEach((transfer) => {
         const from = transfer.args[0]
         const to = transfer.args[1]
         const tokenId = transfer.args[2].toString()
 
         if (from === adress) {
-            mintedTokens.add(tokenId)
+            relevantTokens.add(tokenId)
             isReceiver = false
         } else if (to === adress) {
-            mintedTokens.delete(tokenId)
+            relevantTokens.delete(tokenId)
             isReceiver = true
         }
     })
-    return mintedTokens
+    return relevantTokens
 }
 
 async function runApp() {
@@ -52,13 +55,6 @@ async function runApp() {
         // Read isOwner
         const isOwner = await myContract.amIContractOwner()
         console.log('Am I Contract Owner:', isOwner)
-
-        // hide/show owner ui
-        // if (isOwner) {
-        //     ownerOnly.style.visibility = 'visible'
-        // } else {
-        //     ownerOnly.style.visibility = 'hidden'
-        // }
 
         createNewDeviceButton.onclick = async () => {
             const contractOwner = await myContract.createNewDevice(
@@ -99,4 +95,62 @@ async function runApp() {
     }
 }
 
-await runApp()
+async function addPendingTransfersToList(devices) {
+    let transactionList = document.getElementById('transactionList')
+    for (let device of devices) {
+        const sn = await getContract().serialNumber(device)
+        const transfer = await getContract().getPendingTransferDetails(device)
+        const sender = transfer.args[0]
+        const receiver = transfer.args[1]
+        const senderAccepted = transfer.args[2]
+        const receiverAccepted = transfer.args[3]
+
+        const row = `
+        <tr>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tokenId}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sn}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">${senderAccepted}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receiverAccepted}</td>
+        </tr>
+    `
+    const signer = getSigner()
+
+        let acceptButton = document.createElement('button')
+        acceptButton.innerText = 'accept'
+        acceptButton.addEventListener('click', (e) => {
+          if (signer === sender && ) {
+            getContract().acceptTransferAsOwner(device)
+          }
+          else if (signer === receiver) {
+            getContract().acceptTransferAsRecipient(device)
+          }
+        })
+    }
+}
+
+async function addDevicesToList(devices) {
+    const deviceList = document.getElementById('device-list')
+    for (let device of devices) {
+        const sn = await getContract().serialNumber(device)
+        let li = document.createElement('li')
+        let textElement = document.createElement('p')
+        textElement.innerText = `ID: ${device} Serial: ${sn}`
+        li.appendChild(textElement)
+        if (isOwner) {
+            let button = document.createElement('button')
+            button.innerText = 'decommsion'
+            button.addEventListener('click', (e) => {
+                decommsionDevice(device)
+            })
+            li.appendChild(button)
+        }
+        deviceList.appendChild(li)
+    }
+}
+window.addEventListener('load', async () => {
+    await runApp()
+    setStatusBarText('Load pending transactions')
+    const tranfers = Array.from(await getTransfersInvolvingAddress())
+    await addPendingTranfersToList(transfers)
+    setStatusBarText('Finished loading')
+})

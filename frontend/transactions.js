@@ -12,7 +12,7 @@ import { ethers, Interface } from 'ethers'
 // statusBar.innerHTML = `<p> ${value} </p>`
 // }
 
-async function loadAllTransferRequestedEvents() {
+async function loadAllTransferRequestedTokenIds() {
     const eventFilter = getContract().filters.TransferRequested()
     const from = 0
     const to = 'latest'
@@ -58,13 +58,40 @@ async function loadAllTransferConfirmedTokenIds() {
     }
 }
 
+async function loadAllBurnedTokenIds() {
+    try {
+        console.log('Loading all past burned tokens...')
+        // Filter for Transfer events where the 'to' address is the zero address
+        const eventFilter = getContract().filters.Transfer(
+            null,
+            ethers.ZeroAddress
+        )
+        const events = await getContract().queryFilter(eventFilter, 0, 'latest')
+        const burnedTokenIds = new Set()
+        events.forEach((event) => {
+            // Assuming tokenId is the third argument (index 2) in the standard ERC-721 Transfer event
+            burnedTokenIds.add(event.args.tokenId.toString())
+        })
+        console.log(`Found ${burnedTokenIds.size} burned tokens.`)
+        return burnedTokenIds
+    } catch (error) {
+        console.error('Error loading burned token events:', error)
+        throw error
+    }
+}
+
 async function getTransfersInvolvingAddress(address) {
-    const [requestedTransfers, canceledTokenIds, confirmedTokenIds] =
-        await Promise.all([
-            loadAllTransferRequestedEvents(),
-            loadAllTransferCancelledTokenIds(),
-            loadAllTransferConfirmedTokenIds(),
-        ])
+    const [
+        requestedTransfers,
+        canceledTokenIds,
+        confirmedTokenIds,
+        burnedTokenIds,
+    ] = await Promise.all([
+        loadAllTransferRequestedTokenIds(),
+        loadAllTransferCancelledTokenIds(),
+        loadAllTransferConfirmedTokenIds(),
+        loadAllBurnedTokenIds(),
+    ])
     const pendingTransferTokenIds = new Set()
     requestedTransfers.forEach((transfer) => {
         const tokenId = transfer.args[0].toString()
@@ -73,11 +100,10 @@ async function getTransfersInvolvingAddress(address) {
 
         const isCanceled = canceledTokenIds.has(tokenId)
         const isConfirmed = confirmedTokenIds.has(tokenId)
-        if (!isCanceled && !isConfirmed) {
-            if (
-                to !== ethers.ZeroAddress &&
-                (from === address || to === address)
-            ) {
+        const isBurned = burnedTokenIds.has(tokenId)
+
+        if (!isBurned && !isCanceled && !isConfirmed) {
+            if (from === address || to === address) {
                 pendingTransferTokenIds.add(tokenId)
             } else {
                 pendingTransferTokenIds.delete(tokenId)

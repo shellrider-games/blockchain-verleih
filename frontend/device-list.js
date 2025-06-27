@@ -7,12 +7,14 @@ import {
 
 import { ethers, Interface } from 'ethers';
 
+let isOwner = false;
+
 function setStatusBarText(value){
     const statusBar = document.getElementById('status-bar');
     statusBar.innerHTML = `<p> ${value} </p>`;
 }
 
-async function loaadAllTransferEvents() {
+async function loadAllTransferEvents() {
     const eventFilter = getContract().filters.Transfer();
     const from = 0;
     const to = 'latest';
@@ -23,7 +25,7 @@ async function loaadAllTransferEvents() {
 }
 
 async function allExistingDeviceIds() {
-    const transfers = await loaadAllTransferEvents();
+    const transfers = await loadAllTransferEvents();
     const mintedTokens = new Set();
     transfers.forEach(transfer => {
         const from = transfer.args[0];
@@ -39,12 +41,26 @@ async function allExistingDeviceIds() {
     return mintedTokens;
 }
 
+async function decommsionDevice(id) {
+    await getContract().destroyDevice(id);
+}
+
 async function addDevicesToList(devices) {
     const deviceList = document.getElementById('device-list');
     for(let device of devices){
         const sn = await getContract().serialNumber(device);
         let li = document.createElement("li");
-        li.innerText = `ID: ${device} Serial: ${sn}`;
+        let textElement = document.createElement("p");
+        textElement.innerText = `ID: ${device} Serial: ${sn}`;
+        li.appendChild(textElement);
+        if(isOwner) {
+            let button = document.createElement("button");
+            button.innerText = "decommsion";
+            button.addEventListener("click", (e) => {
+                decommsionDevice(device);
+            });
+            li.appendChild(button);
+        }
         deviceList.appendChild(li);
     }
 }
@@ -59,8 +75,6 @@ async function runApp() {
         const contractName = await myContract.name()
         console.log('Contract Name:', contractName)
 
-        const isOwner = await myContract.amIContractOwner()
-        console.log('Am I Contract Owner:', isOwner)
     } catch (error) {
         console.error('Error interacting with contract:', error)
         if (error.code === 'ACTION_REJECTED') {
@@ -76,6 +90,8 @@ async function runApp() {
 
 window.addEventListener("load", async () => {
     await runApp()
+    setStatusBarText("Check if user is contract owner");
+    isOwner = await getContract().amIContractOwner();
     setStatusBarText("Load all devices");
     const devices = Array.from(await allExistingDeviceIds());
     await addDevicesToList(devices);

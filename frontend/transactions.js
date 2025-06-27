@@ -6,6 +6,7 @@ import {
     getProvider,
 } from './services/web3'
 
+import { ethers, Interface } from 'ethers'
 // function setStatusBarText(value) {
 // const statusBar = document.getElementById('status-bar')
 // statusBar.innerHTML = `<p> ${value} </p>`
@@ -73,7 +74,10 @@ async function getTransfersInvolvingAddress(address) {
         const isCanceled = canceledTokenIds.has(tokenId)
         const isConfirmed = confirmedTokenIds.has(tokenId)
         if (!isCanceled && !isConfirmed) {
-            if (from === address || to === address) {
+            if (
+                to !== ethers.ZeroAddress &&
+                (from === address || to === address)
+            ) {
                 pendingTransferTokenIds.add(tokenId)
             } else {
                 pendingTransferTokenIds.delete(tokenId)
